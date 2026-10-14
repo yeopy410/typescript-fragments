@@ -1,64 +1,67 @@
-const SVGNS = "http://www.w3.org/2000/svg";
+const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
 
 
 /**
- * Use {@link buildHTML} or {@link buildSVG} to create instances.
+ * Use {@link HTMLElementBuilder} or {@link SVGElementBuilder} to build specifically.
  */
-export default class ElementBuilder<T extends HTMLElement | SVGElement> {
-  #element;
+export default class ElementBuilder<T extends Element> {
+  protected _element: T;
 
   constructor(element: T) {
-    this.#element = element;
+    this._element = element;
   }
 
-  addClassList(...tokens: string[]): ElementBuilder<T> {
-    this.#element.classList.add(...tokens);
+  addClassList(...tokens: string[]) {
+    this._element.classList.add(...tokens);
     return this;
   }
 
-  setAttribute(qualifiedName: string, value: string): ElementBuilder<T> {
-    this.#element.setAttribute(qualifiedName, value);
+  setAttribute(qualifiedName: string, value: string) {
+    this._element.setAttribute(qualifiedName, value);
     return this;
   }
 
-  setProperty(property: string, value: string | null, priority?: string | undefined): ElementBuilder<T> {
-    this.#element.style.setProperty(property, value, priority);
+  setTextContent(text: string | null) {
+    this._element.textContent = text;
     return this;
   }
 
-  append(...nodes: (string | Node)[]): ElementBuilder<T> {
-    this.#element.append(...nodes);
+  append(...nodes: (string | Node)[]) {
+    this._element.append(...nodes);
     return this;
   }
 
-  build(): T {
-    return this.#element;
+  build() {
+    return this._element;
   }
 
 }
 
 
 
-export function buildHTML<K extends keyof HTMLElementTagNameMap>(tagName: K) {
-  return new ElementBuilder(document.createElement(tagName));
+export class HTMLElementBuilder<K extends keyof HTMLElementTagNameMap> extends ElementBuilder<HTMLElementTagNameMap[K]> {
+  constructor(tagName: K) {
+    super(document.createElement(tagName));
+  }
+
+  setProperty(property: string, value: string | null, priority?: string | undefined) {
+    this._element.style.setProperty(property, value, priority);
+    return this;
+  }
+
 }
 
-export function buildSVG<K extends keyof SVGElementTagNameMap>(qualifiedName: K) {
-  return new ElementBuilder(document.createElementNS(SVGNS, qualifiedName));
-}
 
 
+export class SVGElementBuilder<K extends keyof SVGElementTagNameMap> extends ElementBuilder<SVGElementTagNameMap[K]> {
+  constructor(qualifiedName: K) {
+    super(document.createElementNS(SVG_NAMESPACE, qualifiedName));
+  }
 
-export function template(...args: Element[]) {
-  const template = document.createElement('template');
-  template.content.append(...args);
-  return template;
-}
+  setProperty(property: string, value: string | null, priority?: string | undefined) {
+    this._element.style.setProperty(property, value, priority);
+    return this;
+  }
 
-export function div(cssClass: string, ...args: Element[]) {
-  const element = document.createElement('div');
-  element.classList.add(cssClass);
-  element.append(...args);
-  return element;
 }

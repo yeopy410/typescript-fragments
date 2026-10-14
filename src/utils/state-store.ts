@@ -3,9 +3,9 @@ type Handler<T> = (data: T) => void;
 
 
 export interface StateStoreForSubscriber<T> {
-  get: () => T;
-  subscribe: (handler: Handler<T>) => void;
-  unsubscribe: (handler: Handler<T>) => void;
+  get(): T;
+  subscribe(handler: Handler<T>): void;
+  unsubscribe(handler: Handler<T>): void;
 }
 
 

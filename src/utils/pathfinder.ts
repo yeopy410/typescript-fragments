@@ -3,7 +3,7 @@ import Heap from '../data-structure/heap.js';
 
 
 /**
- * Use {@link createPathfinder} to create instances.
+ * Use {@link Pathfinder.create} to create instances.
  */
 export default class Pathfinder {
   #parentMap;
@@ -37,53 +37,53 @@ export default class Pathfinder {
     return path.reverse();
   }
 
-}
 
 
+  /**
+   * Finds all nodes reachable from the start,
+   * choosing a path that leaves the most remaining energy for each node.
+   * @param getVisitCost Returns the non-negative cost of visiting a node.
+   */
+  static create(
+    getVisitCost: (key: number) => number,
+    getNeighbors: (key: number) => number[],
+    startKey: number,
+    startEnergy: number
+  ) {
+    // Sparse arrays indexed by node key.
+    const parentMap: Array<number | undefined> = [];
+    const energyMap: Array<number | undefined> = [];
+    const compareFn = (a: number, b: number) => energyMap[b]! - energyMap[a]!;
+    const priorityQueue = new Heap<number>(compareFn);
+    const reachableNodes = new Set<number>();
 
-/**
- * Finds all nodes reachable from the start,
- * choosing a path that leaves the most remaining energy for each node.
- * @param getVisitCost Returns the non-negative cost of visiting a node.
- */
-export function createPathfinder(
-  getVisitCost: (key: number) => number,
-  getNeighbors: (key: number) => number[],
-  startKey: number,
-  startEnergy: number
-) {
-  // Sparse arrays indexed by node key.
-  const parentMap: Array<number | undefined> = [];
-  const energyMap: Array<number | undefined> = [];
-  const compareFn = (a: number, b: number) => energyMap[b]! - energyMap[a]!;
-  const priorityQueue = new Heap<number>(compareFn);
-  const reachableNodes = new Set<number>();
+    // Mark the Start Node using itself as its parent.
+    parentMap[startKey] = startKey;
+    energyMap[startKey] = startEnergy;
+    priorityQueue.push(startKey);
+    reachableNodes.add(startKey);
 
-  // Mark the Start Node using itself as its parent.
-  parentMap[startKey] = startKey;
-  energyMap[startKey] = startEnergy;
-  priorityQueue.push(startKey);
-  reachableNodes.add(startKey);
+    while (priorityQueue.size) {
+      const parentKey = priorityQueue.pop()!;
+      const parentEnergy = energyMap[parentKey]!;
 
-  while (priorityQueue.size) {
-    const parentKey = priorityQueue.pop()!;
-    const parentEnergy = energyMap[parentKey]!;
+      const childKeys = getNeighbors(parentKey);
+      for (let i = 0; i < childKeys.length; i += 1) {
+        const childKey = childKeys[i];
+        // The first found path leaves the most energy; no need to reconsider.
+        if (parentMap[childKey] != null) continue;
 
-    const childKeys = getNeighbors(parentKey);
-    for (let i = 0; i < childKeys.length; i += 1) {
-      const childKey = childKeys[i];
-      // The first found path leaves the most energy; no need to reconsider.
-      if (parentMap[childKey] != null) continue;
+        const remainingEnergy = parentEnergy - getVisitCost(childKey);
+        if (remainingEnergy < 0) continue;
 
-      const remainingEnergy = parentEnergy - getVisitCost(childKey);
-      if (remainingEnergy < 0) continue;
-
-      parentMap[childKey] = parentKey;
-      energyMap[childKey] = remainingEnergy;
-      priorityQueue.push(childKey);
-      reachableNodes.add(childKey);
+        parentMap[childKey] = parentKey;
+        energyMap[childKey] = remainingEnergy;
+        priorityQueue.push(childKey);
+        reachableNodes.add(childKey);
+      }
     }
+
+    return new Pathfinder(parentMap, reachableNodes);
   }
 
-  return new Pathfinder(parentMap, reachableNodes);
 }

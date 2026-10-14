@@ -3,7 +3,7 @@ import type { Subscribable } from '../utils/publisher.js';
 
 
 
-export type WebSocketEvents = {
+type WebSocketEvents = {
   readonly open: Subscribable<Event>;
   readonly close: Subscribable<CloseEvent>;
   readonly error: Subscribable<Event>;
@@ -12,21 +12,25 @@ export type WebSocketEvents = {
 
 
 
-/**
- * Use {@link createWebSocketManager} to create instances.
- */
 export default class WebSocketManager {
-  #createSocket: () => WebSocket;
+  #url: string;
+  #protocols: string | string[] | undefined;
   #socket: WebSocket;
   #reconnectRequested = false;
 
+  #publishers = {
+    open: new Publisher<Event>(),
+    close: new Publisher<CloseEvent>(),
+    error: new Publisher<Event>(),
+    message: new Publisher<MessageEvent>(),
+  }
+  public readonly events: WebSocketEvents = this.#publishers;
 
 
-  constructor(
-    public readonly events: WebSocketEvents,
-    createWebSocket: () => WebSocket
-  ) {
-    this.#createSocket = createWebSocket;
+
+  constructor(url: string, protocols?: string | string[]) {
+    this.#url = url;
+    this.#protocols = protocols;
     this.#socket = this.#createSocket();
 
     this.events.close.subscribe(() => {
@@ -68,29 +72,15 @@ export default class WebSocketManager {
     this.#socket.close();
   }
 
-}
 
 
-
-export function createWebSocketManager(
-  url: string,
-  protocols?: string | string[]
-) {
-  const publishers = {
-    open: new Publisher<Event>(),
-    close: new Publisher<CloseEvent>(),
-    error: new Publisher<Event>(),
-    message: new Publisher<MessageEvent>(),
-  }
-
-  const createWebSocket = () => {
-    const socket = new WebSocket(url, protocols);
-    socket.onopen = event => publishers.open.publish(event);
-    socket.onclose = event => publishers.close.publish(event);
-    socket.onerror = error => publishers.error.publish(error);
-    socket.onmessage = event => publishers.message.publish(event);
+  #createSocket() {
+    const socket = new WebSocket(this.#url, this.#protocols);
+    socket.onopen = event => this.#publishers.open.publish(event);
+    socket.onclose = event => this.#publishers.close.publish(event);
+    socket.onerror = error => this.#publishers.error.publish(error);
+    socket.onmessage = event => this.#publishers.message.publish(event);
     return socket;
   }
 
-  return new WebSocketManager(publishers, createWebSocket);
 }

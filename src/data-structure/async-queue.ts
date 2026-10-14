@@ -1,46 +1,61 @@
+type AsyncQueueClearOptions<T> = {
+  cleanup?: (value: T) => void,
+  reason?: unknown
+}
+
+
+
 export default class AsyncQueue<T> {
   #valueBuffer: T[] = [];
-  #pullBuffer: PromiseWithResolvers<T>[] = [];
+  #pendingPulls: PromiseWithResolvers<T>[] = [];
 
   /**
-   * Resolves immediately if a value is available; otherwise, waits until a value is pushed.
+   * Returns a promise for the next value, waiting until one is pushed if necessary.
    */
   pull() {
     if (this.#valueBuffer.length) {
       return Promise.resolve(this.#valueBuffer.shift()!);
+    } else {
+      const pendingPull = Promise.withResolvers<T>();
+      this.#pendingPulls.push(pendingPull);
+      return pendingPull.promise;
     }
-
-    const pendingPull = Promise.withResolvers<T>();
-    this.#pullBuffer.push(pendingPull);
-    return pendingPull.promise;
   }
 
   push(value: T) {
-    if (this.#pullBuffer.length) {
-      this.#pullBuffer.shift()!.resolve(value);
+    if (this.#pendingPulls.length) {
+      this.#pendingPulls.shift()!.resolve(value);
     } else {
       this.#valueBuffer.push(value);
     }
   }
 
   /**
-   * Clears all buffered values.
-   * @param cleanup Called for each buffered value before it is removed.
+   * Clears all buffered values and rejects all pending pull operations.
    */
-  clearValueBuffer(cleanup?: (value: T) => void) {
-    if (cleanup) {
+  clear(options?: AsyncQueueClearOptions<T>) {
+    this.clearValues(options?.cleanup);
+    this.rejectPendingPulls(options?.reason);
+  }
+
+  /**
+   * Clears all buffered values.
+   * @param cleanup Called for each buffered value before the buffer is cleared.
+   */
+  clearValues(cleanup?: (value: T) => void) {
+    if (cleanup != null) {
       this.#valueBuffer.forEach(cleanup);
     }
     this.#valueBuffer.length = 0;
   }
 
   /**
-   * Clears all buffered pulls.
-   * @param reason Reject reason.
+   * Rejects all pending pull operations.
+   * @param reason The reason for rejecting each pending pull.
    */
-  clearPullBuffer(reason?: unknown) {
-    this.#pullBuffer.forEach(({ reject }) => reject(reason));
-    this.#pullBuffer.length = 0;
+  rejectPendingPulls(reason?: unknown) {
+    this.#pendingPulls.forEach(({ reject }) => reject(reason));
+    this.#pendingPulls.length = 0;
   }
 
 }

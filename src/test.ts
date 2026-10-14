@@ -1,6 +1,37 @@
+import Publisher from './utils/publisher.js';
+{
+  const a = new Publisher<number>();
+  const b = new Publisher<number>();
+  const f = (value: number) => value * 2;
+
+  a.subscribe(value => b.publish(f(value)))
+}
 
 
+import EventPoint from './utils/event-point.js';
+{
+  const something = new EventPoint<number>();
+  (async () => {
+    const event = await something.event;
+    console.log(event);
 
+    while (true) {
+      try {
+        for await (const event of something) {
+          console.log(event);
+        }
+      } catch (error) {
+        console.error(error);
+        if (true) break;
+      }
+    }
+    console.log('end');
+  })();
+
+  something.resolve(1);
+  something.resolve(2);
+  something.reject('naga');
+}
 
 
 
@@ -8,9 +39,9 @@
 function aa<List extends unknown[]>(...list: List): { [K in keyof List]: List[K] } {
   return list;
 }
-const a = aa(1, 's', 2)
+const a = aa(1, 's', 2);
 
-
+([1]).unshift
 
 
 
@@ -62,9 +93,9 @@ new Worker(
 
 
 
-import WebSocketManager, { createWebSocketManager } from './_web-socket/web-socket-manager.js';
+import WebSocketManager from './_web-socket/web-socket-manager.js';
 
-createWebSocketManager
+WebSocketManager
 
 
 
@@ -82,3 +113,16 @@ const val2 = [5]
   .pop();
 
 val2;
+
+
+
+import { createHTMLElement } from './utils/create-element.js';
+{
+  const element_대충_긴이름 = createHTMLElement('div', el => {
+    el.style.setProperty
+    el.style.setProperty
+    el.style.setProperty
+    el.textContent
+    el.addEventListener
+  });
+}

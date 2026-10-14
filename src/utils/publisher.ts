@@ -5,7 +5,6 @@ type Listener<T> = (data: T) => void;
 export interface Subscribable<T> {
   subscribe(listener: Listener<T>): void;
   unsubscribe(listener: Listener<T>): void;
-  once(listener: Listener<T>): void;
 }
 
 
@@ -21,22 +20,24 @@ export default class Publisher<T> implements Subscribable<T> {
     this.#listeners.delete(listener);
   }
 
-  once(listener: Listener<T>) {
-    const onceListener = (data: T) => {
-      this.unsubscribe(onceListener);
-      listener(data);
-    };
-    this.subscribe(onceListener);
-  }
-
   publish(data: T) {
     for (const listener of [...this.#listeners]) {
       listener(data);
     }
   }
 
-  get asSubscribable(): Subscribable<T> {
-    return this;
-  }
+}
 
+
+
+/**
+ * @returns Wrapped listener for unsubscribe.
+ */
+export function once<T>(subscribable: Subscribable<T>, listener: Listener<T>) {
+  const wrappedListener = (data: T) => {
+    subscribable.unsubscribe(wrappedListener);
+    listener(data);
+  };
+  subscribable.subscribe(wrappedListener);
+  return wrappedListener;
 }

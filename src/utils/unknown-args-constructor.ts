@@ -12,11 +12,11 @@ type Constructor = new (...args: any[]) => any;
 
 
 
-export default function createUnknownArgsConstructor<T extends Constructor>(
+export default function createUnknownArgListConstructor<T extends Constructor>(
   constructor: T,
   parameterTypes: TypeNameTuple<ConstructorParameters<T>>
 ) {
-  const isCorrectArgs = (args: unknown[]): args is ConstructorParameters<typeof constructor> => {
+  const isCorrectArgs = (args: unknown[]): args is ConstructorParameters<T> => {
     for (let i = 0; i < parameterTypes.length; i += 1) {
       if (typeof args[i] !== parameterTypes[i]) {
         return false;
@@ -43,17 +43,22 @@ export default function createUnknownArgsConstructor<T extends Constructor>(
 
 // 사용 예시
 class Aaa {
-  static fromUnknownArgList = createUnknownArgsConstructor(Aaa, ['number', 'string']);
+  static fromUnknownArgList = createUnknownArgListConstructor(Aaa, ['number', 'string']);
 
   constructor(
     public readonly aa: number,
     public readonly bb: string,
   ) {}
 
-  toList() {
+  get toArgs() {
     return [
       this.aa,
       this.bb,
     ];
   }
 }
+
+new Aaa(1, '');
+const something: any[] | undefined = [2, '23'];
+const aaa = Aaa.fromUnknownArgList(something);
+const transportData = aaa.toArgs;
