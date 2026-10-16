@@ -1,4 +1,4 @@
-const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 
 
@@ -10,8 +10,6 @@ export function createHTMLElement<K extends keyof HTMLElementTagNameMap>(
   setup?.(element);
   return element;
 }
-
-
 
 export function createSVGElement<K extends keyof SVGElementTagNameMap>(
   tagName: K,

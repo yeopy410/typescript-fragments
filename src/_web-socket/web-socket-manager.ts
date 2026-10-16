@@ -1,39 +1,31 @@
-import Publisher from '../utils/publisher.js';
-import type { Subscribable } from '../utils/publisher.js';
+import EventEmitter from '../utils/event-emitter.js';
 
 
 
-type WebSocketEvents = {
-  readonly open: Subscribable<Event>;
-  readonly close: Subscribable<CloseEvent>;
-  readonly error: Subscribable<Event>;
-  readonly message: Subscribable<MessageEvent>;
+export interface WebSocketManagerEvents {
+  open: Event;
+  close: CloseEvent;
+  error: Event;
+  message: MessageEvent;
 }
 
 
 
-export default class WebSocketManager {
+export default class WebSocketManager extends EventEmitter<WebSocketManagerEvents> {
   #url: string;
   #protocols: string | string[] | undefined;
   #socket: WebSocket;
   #reconnectRequested = false;
 
-  #publishers = {
-    open: new Publisher<Event>(),
-    close: new Publisher<CloseEvent>(),
-    error: new Publisher<Event>(),
-    message: new Publisher<MessageEvent>(),
-  }
-  public readonly events: WebSocketEvents = this.#publishers;
-
 
 
   constructor(url: string, protocols?: string | string[]) {
+    super();
     this.#url = url;
     this.#protocols = protocols;
     this.#socket = this.#createSocket();
 
-    this.events.close.subscribe(() => {
+    this.on('close', () => {
       if (this.#reconnectRequested) {
         this.reconnect();
       }
@@ -76,10 +68,10 @@ export default class WebSocketManager {
 
   #createSocket() {
     const socket = new WebSocket(this.#url, this.#protocols);
-    socket.onopen = event => this.#publishers.open.publish(event);
-    socket.onclose = event => this.#publishers.close.publish(event);
-    socket.onerror = error => this.#publishers.error.publish(error);
-    socket.onmessage = event => this.#publishers.message.publish(event);
+    socket.onopen = event => this.emit('open', event);
+    socket.onclose = event => this.emit('close', event);
+    socket.onerror = error => this.emit('error', error);
+    socket.onmessage = event => this.emit('message', event);
     return socket;
   }
 

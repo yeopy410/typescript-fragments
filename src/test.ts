@@ -1,31 +1,48 @@
-import Publisher from './utils/publisher.js';
-{
-  const a = new Publisher<number>();
-  const b = new Publisher<number>();
-  const f = (value: number) => value * 2;
-
-  a.subscribe(value => b.publish(f(value)))
-}
-
-
 import EventPoint from './utils/event-point.js';
 {
   const something = new EventPoint<number>();
-  (async () => {
-    const event = await something.event;
-    console.log(event);
 
+  (async () => {
+    try {
+      for await (const event of something) {
+        console.log(event);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    console.log('end');
+  })();
+
+  (async () => {
     while (true) {
       try {
-        for await (const event of something) {
-          console.log(event);
-        }
+        const event = await something.event;
+        console.log(event);
       } catch (error) {
         console.error(error);
-        if (true) break;
+        break;
       }
     }
     console.log('end');
+  })();
+
+  (async () => {
+    let activated = true;
+    let code = 0;
+    while (activated) {
+      try {
+        const event = await something.event;
+        console.log(event);
+      } catch (error) {
+        console.error(error);
+        if (true) {
+          code = 1;
+          activated = false;
+        };
+      }
+    }
+    console.log('end');
+    return code;
   })();
 
   something.resolve(1);
@@ -116,7 +133,7 @@ val2;
 
 
 
-import { createHTMLElement } from './utils/create-element.js';
+import { createHTMLElement } from './functions/create-element.js';
 {
   const element_대충_긴이름 = createHTMLElement('div', el => {
     el.style.setProperty

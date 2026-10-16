@@ -1,4 +1,4 @@
-import Heap from '../data-structure/heap.js';
+import Heap from './heap.js';
 
 
 

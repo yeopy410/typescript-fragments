@@ -13,6 +13,8 @@ export default class EventPoint<T> {
     while (true) yield await this.#event.promise;
   }
 
+
+
   resolve(value: T) {
     setTimeout(() => {
       this.#event.resolve(value);
