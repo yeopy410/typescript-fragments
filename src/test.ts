@@ -88,7 +88,7 @@ maybe(map.get(4))
 //     const 선택유닛키들 = maybe(선택.get인덱스())
 //       .map(지도모델.get유닛키들from인덱스)
 //       .value;
-//     if (선택유닛키들) {
+//     if (선택유닛키들 != null) {
 
 //     } else {
 

@@ -1,15 +1,22 @@
-import Publisher from '../utils/publisher.js';
+import EventEmitter from '../utils/event-emitter.js';
 
 
 
-export class HexMap {
+interface HexMapEvents {
+
+}
+
+
+
+export class HexMap extends EventEmitter<HexMapEvents> {
   #canvas = document.createElement('canvas');
   #offscreenCanvas = this.#canvas.transferControlToOffscreen();
   public readonly screen: HTMLElement = this.#canvas;
 
-  #publisher = new Publisher<any>();
-  public readonly publisher = this.#publisher.asSubscribable;
 
-  constructor() {}
+
+  constructor() {
+    super();
+  }
 
 }
